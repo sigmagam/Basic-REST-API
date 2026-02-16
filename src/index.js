@@ -1,3 +1,4 @@
+// src/index.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -11,19 +12,26 @@ const { swaggerDocs: V1SwaggerDocs } = require('./v1/swagger');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// adding Helmet to enhance your API's security
+// middlewares
 app.use(helmet());
-// using bodyParser to parse JSON bodies into JS objects
 app.use(bodyParser.json());
-// enabling CORS for all requests
 app.use(cors());
-// adding morgan to log HTTP requests
 app.use(morgan('tiny'));
-// setup routes
+
+// routes
 app.use('/api/v1/auth', v1AuthRouter);
 app.use('/api/v1/users', v1UserRouter);
 
-app.listen(PORT, () => {
-	console.log(`API is listening on port ${PORT}`);
-	V1SwaggerDocs(app, PORT);
-});
+// setup swagger docs here so routes exist whether running local or serverless
+// If V1SwaggerDocs expects a port, it can accept undefined — see note bawah.
+V1SwaggerDocs(app, PORT);
+
+// export app so serverless wrapper can require it
+module.exports = app;
+
+// only start listening when this file is run directly (eg. `node src/index.js` locally)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`API is listening on port ${PORT}`);
+  });
+}
